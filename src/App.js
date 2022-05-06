@@ -8,10 +8,6 @@ import styled from "styled-components";
 const truncate = (input, len) =>
   input.length > len ? `${input.substring(0, len)}...` : input;
 
-const { createAlchemyWeb3, ethers } = require("@alch/alchemy-web3");
-var Web3 = require('web3');
-var Contract = require('web3-eth-contract');
-
 export const StyledButton = styled.button`
   padding: 10px;
   border-radius: 50px;
@@ -89,7 +85,6 @@ function App() {
   const blockchain = useSelector((state) => state.blockchain);
   const data = useSelector((state) => state.data);
   const [claimingNft, setClaimingNft] = useState(false);
-  const [supply , setTotalSupply] = useState(0);
   const [feedback, setFeedback] = useState(`Click buy to mint your NFT.`);
   const [mintAmount, setMintAmount] = useState(1);
   const [CONFIG, SET_CONFIG] = useState({
@@ -138,11 +133,7 @@ function App() {
         setFeedback(
           `WOW, the ${CONFIG.NFT_NAME} is yours! go visit NFT Market to view it.`
         );
-        // setClaimingNft(false);
-        blockchain.smartContract.methods.totalSupply().call().then(res => {
-          setTotalSupply(res);
-        });
-        
+        setClaimingNft(false);
         dispatch(fetchData(blockchain.account));
       });
   };
@@ -162,32 +153,10 @@ function App() {
     }
     setMintAmount(newMintAmount);
   };
-  
-    const getDataWithoutWallet = async () => {
-    const web3 = createAlchemyWeb3("https://eth-mainnet.alchemyapi.io/v2/fopVAAza5ioAliVStbhwZMymHOrxlN6l");
-    const abiResponse = await fetch("/config/abi.json", {
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-    });
-    const abi = await abiResponse.json();
-    var contract = new Contract(abi, '0x56546DAF99C69c0F6271FA287b30A1946cA466f0');
-    contract.setProvider(web3.currentProvider);
-    console.log(contract);
-    const totalSupply = await contract.methods
-      .totalSupply()
-      .call();
-    setTotalSupply(totalSupply);
 
-  }
-
-
-  const getData = async () => {
+  const getData = () => {
     if (blockchain.account !== "" && blockchain.smartContract !== null) {
       dispatch(fetchData(blockchain.account));
-      const totalSupply =  await blockchain.smartContract.methods.totalSupply().call();
-      setTotalSupply(totalSupply);
     }
   };
 
@@ -204,7 +173,6 @@ function App() {
 
   useEffect(() => {
     getConfig();
-    getDataWithoutWallet();
   }, []);
 
   useEffect(() => {
@@ -245,7 +213,7 @@ function App() {
                 color: "var(--accent-text)",
               }}
             >
-             <s.TextSubTitle size={30}>{1111-supply} of 1111 NFT's Available</s.TextSubTitle>
+              {data.totalSupply} / {CONFIG.MAX_SUPPLY}
             </s.TextTitle>
             <s.TextDescription
               style={{
@@ -258,7 +226,7 @@ function App() {
               </StyledLink>
             </s.TextDescription>
             <s.SpacerSmall />
-            {Number(data.supply) >= CONFIG.MAX_SUPPLY ? (
+            {Number(data.totalSupply) >= CONFIG.MAX_SUPPLY ? (
               <>
                 <s.TextTitle
                   style={{ textAlign: "center", color: "var(--accent-text)" }}
